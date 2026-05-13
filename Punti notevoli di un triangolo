@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punti Notevoli del Triangolo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            user-select: none;
+        }
+        canvas {
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border-radius: 0.5rem;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center p-4 md:p-8">
+    <div class="max-w-5xl w-full">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-slate-800">Geometria del Triangolo</h1>
+            <p class="text-slate-600">Trascina i vertici e attiva le linee geometriche. Spessori aumentati per una migliore visibilità.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Pannello Controlli -->
+            <div class="lg:col-span-1 space-y-4 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                <h2 class="font-semibold text-lg border-b pb-2">Linee e Punti</h2>
+                
+                <div class="space-y-3">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="checkIncenter" class="form-checkbox h-4 w-4 text-red-500">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-red-600 transition">I: Bisettrici</span>
+                    </label>
+
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="checkCentroid" class="form-checkbox h-4 w-4 text-blue-500">
+                        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-blue-600 transition">B: Mediane</span>
+                    </label>
+
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="checkCircumcenter" class="form-checkbox h-4 w-4 text-green-600">
+                        <div class="w-3 h-3 rounded-full bg-green-600"></div>
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-green-600 transition">C: Assi</span>
+                    </label>
+
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="checkOrthocenter" class="form-checkbox h-4 w-4 text-purple-600">
+                        <div class="w-3 h-3 rounded-full bg-purple-600"></div>
+                        <span class="text-sm font-medium text-slate-700 group-hover:text-purple-600 transition">O: Altezze</span>
+                    </label>
+                </div>
+
+                <div class="mt-6 pt-4 border-t">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="showEuler" class="form-checkbox h-4 w-4 text-orange-500">
+                        <span class="text-sm text-slate-700 font-semibold">Retta di Eulero (O-B-C)</span>
+                    </label>
+                </div>
+                
+                <button id="resetBtn" class="w-full mt-4 bg-slate-800 text-white py-2 rounded hover:bg-slate-700 transition font-medium">
+                    Reset Posizioni
+                </button>
+            </div>
+
+            <!-- Area Canvas -->
+            <div class="lg:col-span-3 flex justify-center">
+                <canvas id="triangleCanvas" width="700" height="550" class="w-full h-auto max-w-full"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('triangleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // UI Elements
+        const checks = {
+            I: document.getElementById('checkIncenter'),
+            B: document.getElementById('checkCentroid'),
+            C: document.getElementById('checkCircumcenter'),
+            O: document.getElementById('checkOrthocenter')
+        };
+        const showEulerCheckbox = document.getElementById('showEuler');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let points = [
+            { x: 350, y: 100, label: 'A' },
+            { x: 550, y: 450, label: 'B' },
+            { x: 150, y: 450, label: 'C' }
+        ];
+
+        let draggedPoint = null;
+
+        // --- UTILS ---
+        function getDist(p1, p2) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
+        function drawLine(p1, p2, color, dashed = true, width = 2.5) {
+            ctx.beginPath();
+            if (dashed) ctx.setLineDash([8, 6]);
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Estende una linea tra due punti per coprire il canvas
+        function drawExtendedLine(p1, p2, color, width = 2) {
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            if (length === 0) return;
+            
+            const ux = dx / length;
+            const uy = dy / length;
+
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(p1.x - ux * 1000, p1.y - uy * 1000);
+            ctx.lineTo(p1.x + ux * 1000, p1.y + uy * 1000);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // --- CALCOLI GEOMETRICI ---
+
+        function getIncenter(p1, p2, p3) {
+            const a = getDist(p2, p3), b = getDist(p1, p3), c = getDist(p1, p2);
+            const p = a + b + c;
+            return { x: (a * p1.x + b * p2.x + c * p3.x) / p, y: (a * p1.y + b * p2.y + c * p3.y) / p };
+        }
+
+        function getCentroid(p1, p2, p3) {
+            return { x: (p1.x + p2.x + p3.x) / 3, y: (p1.y + p2.y + p3.y) / 3 };
+        }
+
+        function getCircumcenter(p1, p2, p3) {
+            const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y, x3 = p3.x, y3 = p3.y;
+            const D = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+            if (D === 0) return { x: x1, y: y1 };
+            const ux = ((x1 * x1 + y1 * y1) * (y2 - y3) + (x2 * x2 + y2 * y2) * (y3 - y1) + (x3 * x3 + y3 * y3) * (y1 - y2)) / D;
+            const uy = ((x1 * x1 + y1 * y1) * (x3 - x2) + (x2 * x2 + y2 * y2) * (x1 - x3) + (x3 * x3 + y3 * y3) * (x2 - x1)) / D;
+            return { x: ux, y: uy };
+        }
+
+        function getOrthocenter(p1, p2, p3) {
+            const G = getCentroid(p1, p2, p3);
+            const C = getCircumcenter(p1, p2, p3);
+            return { x: 3 * G.x - 2 * C.x, y: 3 * G.y - 2 * C.y };
+        }
+
+        function projectPointOnLine(p, a, b) {
+            const atb = { x: b.x - a.x, y: b.y - a.y };
+            const atp = { x: p.x - a.x, y: p.y - a.y };
+            const dot = atp.x * atb.x + atp.y * atb.y;
+            const lenSq = atb.x * atb.x + atb.y * atb.y;
+            if (lenSq === 0) return a;
+            const t = dot / lenSq;
+            return { x: a.x + atb.x * t, y: a.y + atb.y * t };
+        }
+
+        // --- DISEGNO ---
+
+        function drawPointLabel(p, color, label) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            
+            ctx.fillStyle = "#0f172a";
+            ctx.font = "bold 18px Inter, sans-serif";
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = "rgba(255,255,255,0.8)";
+            ctx.fillText(label, p.x + 12, p.y - 12);
+            ctx.shadowBlur = 0;
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const [A, B, C_v] = points;
+
+            // 1. Disegna Triangolo
+            ctx.beginPath();
+            ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C_v.x, C_v.y);
+            ctx.closePath();
+            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 4; ctx.stroke();
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.08)'; ctx.fill();
+
+            // 2. Calcoli
+            const I = getIncenter(A, B, C_v);
+            const G = getCentroid(A, B, C_v);
+            const Circ = getCircumcenter(A, B, C_v);
+            const O = getOrthocenter(A, B, C_v);
+
+            // 3. Linee di costruzione (SPESSORE AUMENTATO)
+            
+            // BISETTRICI (Incentro) - Rosso
+            if (checks.I.checked) {
+                drawLine(A, I, 'rgba(220, 38, 38, 0.6)', true, 3);
+                drawLine(B, I, 'rgba(220, 38, 38, 0.6)', true, 3);
+                drawLine(C_v, I, 'rgba(220, 38, 38, 0.6)', true, 3);
+            }
+
+            // MEDIANE (Baricentro) - Blu
+            if (checks.B.checked) {
+                const mAB = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+                const mBC = { x: (B.x + C_v.x) / 2, y: (B.y + C_v.y) / 2 };
+                const mCA = { x: (C_v.x + A.x) / 2, y: (C_v.y + A.y) / 2 };
+                drawLine(A, mBC, 'rgba(37, 99, 235, 0.6)', true, 3);
+                drawLine(B, mCA, 'rgba(37, 99, 235, 0.6)', true, 3);
+                drawLine(C_v, mAB, 'rgba(37, 99, 235, 0.6)', true, 3);
+            }
+
+            // ASSI (Circocentro) - Verde
+            if (checks.C.checked) {
+                const mAB = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+                const mBC = { x: (B.x + C_v.x) / 2, y: (B.y + C_v.y) / 2 };
+                const mCA = { x: (C_v.x + A.x) / 2, y: (C_v.y + A.y) / 2 };
+                drawExtendedLine(mAB, Circ, 'rgba(22, 163, 74, 0.5)', 2.5);
+                drawExtendedLine(mBC, Circ, 'rgba(22, 163, 74, 0.5)', 2.5);
+                drawExtendedLine(mCA, Circ, 'rgba(22, 163, 74, 0.5)', 2.5);
+            }
+
+            // ALTEZZE (Ortocentro) - Viola
+            if (checks.O.checked) {
+                const pA = projectPointOnLine(A, B, C_v);
+                const pB = projectPointOnLine(B, A, C_v);
+                const pC = projectPointOnLine(C_v, A, B);
+                drawLine(A, pA, 'rgba(147, 51, 234, 0.6)', true, 3);
+                drawLine(B, pB, 'rgba(147, 51, 234, 0.6)', true, 3);
+                drawLine(C_v, pC, 'rgba(147, 51, 234, 0.6)', true, 3);
+            }
+
+            // Retta di Eulero - Arancione
+            if (showEulerCheckbox.checked) {
+                const dx = O.x - Circ.x;
+                const dy = O.y - Circ.y;
+                ctx.beginPath();
+                ctx.setLineDash([15, 8]);
+                ctx.moveTo(Circ.x - dx * 10, Circ.y - dy * 10);
+                ctx.lineTo(O.x + dx * 10, O.y + dy * 10);
+                ctx.strokeStyle = '#f97316';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 4. Disegna Punti Notevoli
+            if (checks.I.checked) drawPointLabel(I, '#ef4444', 'I');
+            if (checks.B.checked) drawPointLabel(G, '#3b82f6', 'B');
+            if (checks.C.checked) drawPointLabel(Circ, '#16a34a', 'C');
+            if (checks.O.checked) drawPointLabel(O, '#9333ea', 'O');
+
+            // 5. Disegna Vertici (MANIGLIE)
+            points.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+                ctx.fillStyle = '#0f172a';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
+        }
+
+        // --- INTERAZIONE ---
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        function handleStart(e) {
+            const pos = getMousePos(e);
+            points.forEach(p => { if (getDist(pos, p) < 35) draggedPoint = p; });
+        }
+
+        function handleMove(e) {
+            if (draggedPoint) {
+                const pos = getMousePos(e);
+                draggedPoint.x = pos.x;
+                draggedPoint.y = pos.y;
+                update();
+            }
+        }
+
+        canvas.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', () => draggedPoint = null);
+        
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
+
+        resetBtn.addEventListener('click', () => {
+            points = [{ x: 350, y: 100, label: 'A' }, { x: 550, y: 450, label: 'B' }, { x: 150, y: 450, label: 'C' }];
+            update();
+        });
+
+        Object.values(checks).forEach(c => c.addEventListener('change', update));
+        showEulerCheckbox.addEventListener('change', update);
+
+        window.onload = update;
+    </script>
+</body>
+</html>
