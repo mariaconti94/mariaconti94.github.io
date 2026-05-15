@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisi Dati: Scatter Plot e Medie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+        }
+        .canvas-container {
+            position: relative;
+            height: 65vh;
+            width: 100%;
+        }
+        textarea {
+            resize: none;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 id="main-title-display" class="text-3xl font-bold text-slate-800">Simulatore Scatter Plot</h1>
+            <p class="text-slate-600">Personalizza i nomi, inserisci i dati e visualizza le medie.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Pannello di Controllo -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Sezione Etichette -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-700">Etichette Grafico</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Titolo Grafico</label>
+                            <input type="text" id="chart-title-input" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="es: Analisi Sperimentale">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Nome Asse X</label>
+                            <input type="text" id="x-axis-label" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="es: Tempo (s)">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Nome Asse Y</label>
+                            <input type="text" id="y-axis-label" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="es: Pressione (bar)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sezione Dati -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-700">Inserimento Dati</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Dati X</label>
+                            <textarea id="input-x" rows="3" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono" placeholder="es: 10, 20, 30..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Dati Y</label>
+                            <textarea id="input-y" rows="3" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono" placeholder="es: 15, 25, 35..."></textarea>
+                        </div>
+                    </div>
+
+                    <hr class="my-6">
+
+                    <h2 class="text-xl font-semibold mb-4 text-slate-700">Impostazioni Medie</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">x medio</label>
+                            <input type="number" id="mean-x" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder="Inserisci valore...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">y medio</label>
+                            <input type="number" id="mean-y" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Inserisci valore...">
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 mt-6">
+                        <button onclick="updateChart()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg">
+                            Aggiorna Grafico
+                        </button>
+                        <button onclick="downloadChart()" class="w-full bg-slate-100 text-slate-700 py-2 rounded-lg font-semibold hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 border border-slate-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Scarica PNG
+                        </button>
+                    </div>
+                    
+                    <div id="error-msg" class="mt-4 text-red-500 text-xs hidden text-center font-semibold">
+                        Errore: Le colonne X e Y devono avere lo stesso numero di elementi.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Area Grafico -->
+            <div class="lg:col-span-3">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="canvas-container">
+                        <canvas id="scatterChart"></canvas>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div class="bg-green-50 p-3 rounded-lg border border-green-100">
+                            <span class="text-xs font-bold text-green-700 uppercase" id="label-display-x">x medio</span>
+                            <p class="text-lg font-mono text-green-800" id="display-mean-x">-</p>
+                        </div>
+                        <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                            <span class="text-xs font-bold text-orange-700 uppercase" id="label-display-y">y medio</span>
+                            <p class="text-lg font-mono text-orange-800" id="display-mean-y">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart;
+
+        function parseData(text) {
+            return text.split(/[\s,]+/).filter(item => item.trim() !== "").map(Number).filter(num => !isNaN(num));
+        }
+
+        function getData() {
+            const xRaw = document.getElementById('input-x').value;
+            const yRaw = document.getElementById('input-y').value;
+            const xValues = parseData(xRaw);
+            const yValues = parseData(yRaw);
+            const errorDiv = document.getElementById('error-msg');
+
+            if (xValues.length === 0 && yValues.length === 0) {
+                errorDiv.classList.add('hidden');
+                return [];
+            }
+
+            if (xValues.length !== yValues.length) {
+                errorDiv.classList.remove('hidden');
+                errorDiv.innerText = `Errore: X ha ${xValues.length} valori, Y ne ha ${yValues.length}.`;
+                return null;
+            }
+
+            errorDiv.classList.add('hidden');
+            return xValues.map((x, i) => ({ x: x, y: yValues[i] }));
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: [] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: { display: true, text: 'Variabile X', font: { weight: 'bold', size: 14 } },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Variabile Y', font: { weight: 'bold', size: 14 } },
+                            grid: { color: '#f1f5f9' }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Scatter Plot',
+                            font: { size: 18, weight: 'bold' }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: { usePointStyle: true }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            const data = getData();
+            if (data === null) return;
+
+            // Leggi etichette personalizzate
+            const customTitle = document.getElementById('chart-title-input').value || 'Scatter Plot';
+            const customXLabel = document.getElementById('x-axis-label').value || 'Variabile X';
+            const customYLabel = document.getElementById('y-axis-label').value || 'Variabile Y';
+
+            // Aggiorna etichette assi e titolo grafico
+            chart.options.plugins.title.text = customTitle;
+            chart.options.scales.x.title.text = customXLabel;
+            chart.options.scales.y.title.text = customYLabel;
+            
+            // Aggiorna etichette display box
+            document.getElementById('label-display-x').innerText = customXLabel + " medio";
+            document.getElementById('label-display-y').innerText = customYLabel + " medio";
+
+            const meanXInput = document.getElementById('mean-x').value;
+            const meanYInput = document.getElementById('mean-y').value;
+            const hasMeanX = meanXInput !== "";
+            const hasMeanY = meanYInput !== "";
+            const meanX = hasMeanX ? parseFloat(meanXInput) : null;
+            const meanY = hasMeanY ? parseFloat(meanYInput) : null;
+
+            document.getElementById('display-mean-x').innerText = hasMeanX ? `X̄ = ${meanX}` : "-";
+            document.getElementById('display-mean-y').innerText = hasMeanY ? `Ȳ = ${meanY}` : "-";
+
+            let allX = data.map(p => p.x);
+            let allY = data.map(p => p.y);
+            if (hasMeanX) allX.push(meanX);
+            if (hasMeanY) allY.push(meanY);
+            if (allX.length === 0) { allX = [0, 10]; allY = [0, 10]; }
+
+            const minX = Math.min(...allX);
+            const maxX = Math.max(...allX);
+            const minY = Math.min(...allY);
+            const maxY = Math.max(...allY);
+            
+            const rangeX = maxX - minX || 10;
+            const rangeY = maxY - minY || 10;
+            const paddingX = rangeX * 0.15;
+            const paddingY = rangeY * 0.15;
+
+            const datasets = [];
+
+            datasets.push({
+                label: 'Punti Dati',
+                data: data,
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: 'rgb(59, 130, 246)',
+                pointRadius: 6,
+                type: 'scatter',
+                order: 1
+            });
+
+            if (hasMeanX) {
+                datasets.push({
+                    label: `${customXLabel} medio`,
+                    data: [{x: meanX, y: minY - paddingY}, {x: meanX, y: maxY + paddingY}],
+                    borderColor: 'rgba(34, 197, 94, 0.9)',
+                    borderWidth: 3,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    showLine: true,
+                    type: 'line',
+                    order: 2
+                });
+            }
+
+            if (hasMeanY) {
+                datasets.push({
+                    label: `${customYLabel} medio`,
+                    data: [{x: minX - paddingX, y: meanY}, {x: maxX + paddingX, y: meanY}],
+                    borderColor: 'rgba(249, 115, 22, 0.9)',
+                    borderWidth: 3,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    showLine: true,
+                    type: 'line',
+                    order: 3
+                });
+            }
+
+            chart.data.datasets = datasets;
+            chart.options.scales.x.min = minX - paddingX;
+            chart.options.scales.x.max = maxX + paddingX;
+            chart.options.scales.y.min = minY - paddingY;
+            chart.options.scales.y.max = maxY + paddingY;
+
+            chart.update();
+        }
+
+        function downloadChart() {
+            const canvas = document.getElementById('scatterChart');
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const ctx = tempCanvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            ctx.drawImage(canvas, 0, 0);
+            const link = document.createElement('a');
+            link.download = 'grafico-personalizzato.png';
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = () => {
+            initChart();
+            updateChart();
+        };
+    </script>
+</body>
+</html>
