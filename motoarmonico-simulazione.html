@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moto Circolare e Moto Armonico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            width: 100%;
+            height: auto;
+        }
+        .control-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-indigo-700">Moto Armonico come Proiezione</h1>
+            <p class="text-gray-600 mt-2">Visualizzazione della relazione tra Moto Circolare Uniforme e Moto Armonico Semplice</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Pannello Controlli -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="control-panel">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                        Parametri
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Raggio / Ampiezza (A)</label>
+                            <input type="range" id="radiusRange" min="20" max="120" value="80" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1"><span id="radiusVal">80</span> px</div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Velocità Angolare (ω)</label>
+                            <input type="range" id="omegaRange" min="0.1" max="5" step="0.1" value="1.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1"><span id="omegaVal">1.5</span> rad/s</div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100">
+                            <button id="pauseBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+                                Pausa / Riprendi
+                            </button>
+                            <button id="resetBtn" class="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200">
+                                Reset Traccia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                    <h3 class="text-indigo-800 font-bold text-sm uppercase tracking-wider mb-2">Legenda</h3>
+                    <ul class="text-sm space-y-2 text-indigo-900">
+                        <li class="flex items-center"><span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span> Moto Circolare</li>
+                        <li class="flex items-center"><span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span> Moto Armonico (Proiezione)</li>
+                        <li class="flex items-center"><span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span> Tracciato Temporale</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Area Simulazione -->
+            <div class="lg:col-span-3">
+                <canvas id="simCanvas"></canvas>
+                
+                <div class="mt-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold mb-2">Spiegazione Fisica</h3>
+                    <p class="text-gray-700 leading-relaxed">
+                        Il punto rosso si muove di <strong>Moto Circolare Uniforme</strong> sulla circonferenza. 
+                        Se proiettiamo la sua posizione sull'asse verticale (punto blu), osserviamo che quest'ultimo si muove avanti e indietro tra i due estremi. 
+                        Questo movimento è il <strong>Moto Armonico Semplice</strong>.
+                    </p>
+                    <div class="mt-4 p-3 bg-gray-50 rounded font-mono text-sm text-center">
+                        y(t) = A · sin(ωt + φ)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Input elementi
+        const radiusRange = document.getElementById('radiusRange');
+        const omegaRange = document.getElementById('omegaRange');
+        const radiusVal = document.getElementById('radiusVal');
+        const omegaVal = document.getElementById('omegaVal');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Parametri simulazione
+        let radius = parseInt(radiusRange.value);
+        let omega = parseFloat(omegaRange.value);
+        let angle = 0;
+        let isPaused = false;
+        let history = []; // Per il grafico temporale
+        const maxHistory = 400;
+
+        // Resize canvas
+        function resize() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = 500;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Event Listeners
+        radiusRange.oninput = (e) => {
+            radius = parseInt(e.target.value);
+            radiusVal.innerText = radius;
+        };
+        omegaRange.oninput = (e) => {
+            omega = parseFloat(e.target.value);
+            omegaVal.innerText = omega;
+        };
+        pauseBtn.onclick = () => { isPaused = !isPaused; };
+        resetBtn.onclick = () => { history = []; };
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 4;
+            const centerY = canvas.height / 2;
+            const graphStartX = canvas.width / 2.5;
+
+            // 1. Disegna la circonferenza di riferimento
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Assi
+            ctx.beginPath();
+            ctx.moveTo(centerX - radius - 20, centerY);
+            ctx.lineTo(centerX + radius + 20, centerY);
+            ctx.moveTo(centerX, centerY - radius - 20);
+            ctx.lineTo(centerX, centerY + radius + 20);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.stroke();
+
+            // Calcolo posizione
+            const posX = centerX + radius * Math.cos(angle);
+            const posY = centerY - radius * Math.sin(angle); // Invertito per coordinate canvas
+
+            // 2. Disegna il vettore raggio (MCU)
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(posX, posY);
+            ctx.strokeStyle = '#f87171';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Punto MCU
+            ctx.beginPath();
+            ctx.arc(posX, posY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#ef4444';
+            ctx.fill();
+
+            // 3. Proiezione sul diametro verticale (Moto Armonico)
+            ctx.beginPath();
+            ctx.setLineDash([2, 2]);
+            ctx.moveTo(posX, posY);
+            ctx.lineTo(centerX, posY);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Punto Moto Armonico
+            ctx.beginPath();
+            ctx.arc(centerX, posY, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#3b82f6';
+            ctx.fill();
+
+            // 4. Grafico Temporale
+            if (!isPaused) {
+                history.unshift(posY);
+                if (history.length > maxHistory) history.pop();
+                angle += omega * 0.02;
+            }
+
+            // Linea di collegamento al grafico
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.moveTo(centerX, posY);
+            ctx.lineTo(graphStartX, posY);
+            ctx.strokeStyle = '#3b82f6';
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Disegno dell'onda sinusoidale
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#22c55e';
+            for (let i = 0; i < history.length; i++) {
+                const x = graphStartX + i * 1.5;
+                if (i === 0) ctx.moveTo(x, history[i]);
+                else ctx.lineTo(x, history[i]);
+            }
+            ctx.stroke();
+            ctx.lineWidth = 1;
+
+            // Assi del grafico
+            ctx.beginPath();
+            ctx.moveTo(graphStartX, centerY - radius - 20);
+            ctx.lineTo(graphStartX, centerY + radius + 20);
+            ctx.moveTo(graphStartX, centerY);
+            ctx.lineTo(canvas.width - 20, centerY);
+            ctx.strokeStyle = '#1e293b';
+            ctx.stroke();
+            
+            ctx.fillStyle = '#64748b';
+            ctx.fillText("Tempo (t) →", canvas.width - 80, centerY + 15);
+            ctx.fillText("Posizione (y)", graphStartX + 5, centerY - radius - 25);
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
