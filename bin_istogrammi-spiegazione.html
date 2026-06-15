@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore di Distribuzioni Statistiche (100 Campioni)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8fafc;
+        }
+        .canvas-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+        .data-list {
+            max-height: 250px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Simulazione di Distribuzioni (n=100)</h1>
+        <p class="text-gray-600 mb-6">Confronto tra una distribuzione Gaussiana e una Casuale Uniforme con 100 campioni ciascuna.</p>
+
+        <!-- Controlli -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <div>
+                <label id="binLabel" class="block text-sm font-medium text-gray-700 mb-2">Ampiezza Binning: 0.8</label>
+                <input type="range" id="binSize" min="0.1" max="2.0" step="0.1" value="0.8" 
+                    class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Molto Fine (0.1)</span>
+                    <span>Larga (2.0)</span>
+                </div>
+            </div>
+            <div class="flex items-end">
+                <button id="regenBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200 shadow-md">
+                    Rigenera Dati (100 campioni)
+                </button>
+            </div>
+        </div>
+
+        <!-- Grafici -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-4 border border-gray-100 rounded-lg shadow-sm">
+                <h2 class="text-xl font-semibold text-blue-800 mb-4 text-center">Distribuzione Gaussiana</h2>
+                <div class="canvas-container">
+                    <canvas id="gaussianChart"></canvas>
+                </div>
+                <p class="mt-4 text-xs text-gray-500 italic text-center">Media 0, Deviazione Standard 2</p>
+            </div>
+
+            <div class="bg-white p-4 border border-gray-100 rounded-lg shadow-sm">
+                <h2 class="text-xl font-semibold text-orange-800 mb-4 text-center">Distribuzione Casuale</h2>
+                <div class="canvas-container">
+                    <canvas id="randomChart"></canvas>
+                </div>
+                <p class="mt-4 text-xs text-gray-500 italic text-center">Uniforme tra -5 e 5</p>
+            </div>
+        </div>
+
+        <!-- Elenco Dati -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h3 class="text-sm font-bold text-blue-900 uppercase mb-2">Valori Gaussiani (n=100)</h3>
+                <div id="gaussianList" class="data-list grid grid-cols-4 gap-2 bg-white p-3 border border-slate-100 rounded">
+                    <!-- Inseriti via JS -->
+                </div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h3 class="text-sm font-bold text-orange-900 uppercase mb-2">Valori Casuali (n=100)</h3>
+                <div id="randomList" class="data-list grid grid-cols-4 gap-2 bg-white p-3 border border-slate-100 rounded">
+                    <!-- Inseriti via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gaussianData = [];
+        let randomData = [];
+        let gChart = null;
+        let rChart = null;
+
+        // Box-Muller per la Gaussiana
+        function randn_bm() {
+            let u = 0, v = 0;
+            while(u === 0) u = Math.random(); 
+            while(v === 0) v = Math.random();
+            return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        }
+
+        function generateData() {
+            gaussianData = [];
+            randomData = [];
+            // Generazione di 100 dati per set
+            for (let i = 0; i < 100; i++) {
+                gaussianData.push(randn_bm() * 2);
+                randomData.push((Math.random() * 10) - 5);
+            }
+            displayDataLists();
+        }
+
+        function displayDataLists() {
+            const gList = document.getElementById('gaussianList');
+            const rList = document.getElementById('randomList');
+            
+            gList.innerHTML = gaussianData.map(v => `<span class="text-blue-700 p-1 bg-blue-50 rounded text-center">${v.toFixed(2)}</span>`).join('');
+            rList.innerHTML = randomData.map(v => `<span class="text-orange-700 p-1 bg-orange-50 rounded text-center">${v.toFixed(2)}</span>`).join('');
+        }
+
+        function getHistogramData(data, binSize) {
+            if (data.length === 0) return { labels: [], values: [] };
+
+            const min = Math.floor(Math.min(...data) / binSize) * binSize;
+            const max = Math.ceil(Math.max(...data) / binSize) * binSize;
+            
+            const bins = {};
+            for (let i = min; i <= max; i += binSize) {
+                bins[i.toFixed(2)] = 0;
+            }
+
+            data.forEach(val => {
+                const bin = (Math.floor(val / binSize) * binSize).toFixed(2);
+                if (bins[bin] !== undefined) {
+                    bins[bin]++;
+                }
+            });
+
+            return {
+                labels: Object.keys(bins),
+                values: Object.values(bins)
+            };
+        }
+
+        function updateCharts() {
+            const binSize = parseFloat(document.getElementById('binSize').value);
+            document.getElementById('binLabel').innerText = `Ampiezza Binning: ${binSize.toFixed(1)}`;
+
+            const gHist = getHistogramData(gaussianData, binSize);
+            const rHist = getHistogramData(randomData, binSize);
+
+            // Chart Gaussiana
+            if (gChart) gChart.destroy();
+            const ctxG = document.getElementById('gaussianChart').getContext('2d');
+            gChart = new Chart(ctxG, {
+                type: 'bar',
+                data: {
+                    labels: gHist.labels,
+                    datasets: [{
+                        label: 'Frequenza',
+                        data: gHist.values,
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1,
+                        barPercentage: 1,
+                        categoryPercentage: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { title: { display: true, text: 'Valore' }, ticks: { maxRotation: 45, minRotation: 45 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Chart Casuale
+            if (rChart) rChart.destroy();
+            const ctxR = document.getElementById('randomChart').getContext('2d');
+            rChart = new Chart(ctxR, {
+                type: 'bar',
+                data: {
+                    labels: rHist.labels,
+                    datasets: [{
+                        label: 'Frequenza',
+                        data: rHist.values,
+                        backgroundColor: 'rgba(249, 115, 22, 0.7)',
+                        borderColor: 'rgb(249, 115, 22)',
+                        borderWidth: 1,
+                        barPercentage: 1,
+                        categoryPercentage: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { title: { display: true, text: 'Valore' }, ticks: { maxRotation: 45, minRotation: 45 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        window.onload = () => {
+            generateData();
+            updateCharts();
+
+            document.getElementById('binSize').oninput = updateCharts;
+            document.getElementById('regenBtn').onclick = () => {
+                generateData();
+                updateCharts();
+            };
+        };
+    </script>
+</body>
+</html>
