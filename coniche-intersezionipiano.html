@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore di Sezioni Coniche 3D con Proiezione</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #0f172a; color: white; }
+        canvas { display: block; }
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            width: 280px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+        input[type=range] { width: 100%; margin: 8px 0; cursor: pointer; accent-color: #4ade80; }
+        .label-group { display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; }
+        
+        /* Pannello Proiezione 2D */
+        .projection-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+        #canvas2D {
+            background: #1e293b;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .conic-badge {
+            position: absolute;
+            top: -15px;
+            right: 10px;
+            background: #4ade80;
+            color: #064e3b;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+        Parametri Sezione
+    </h2>
+    
+    <div class="mb-4">
+        <div class="label-group"><span>Inclinazione (θ)</span><span id="angleVal">0°</span></div>
+        <input type="range" id="angle" min="0" max="85" value="0" step="0.5">
+    </div>
+
+    <div class="mb-4">
+        <div class="label-group"><span>Altezza (Z)</span><span id="posZ" value="2">2</span></div>
+        <input type="range" id="posZRange" min="-4" max="4" value="2" step="0.1">
+    </div>
+
+    <div class="mb-2">
+        <div class="label-group"><span>Spostamento (X)</span><span id="posX" value="0">0</span></div>
+        <input type="range" id="offsetX" min="-2" max="2" value="0" step="0.1">
+    </div>
+
+    <p class="text-[10px] text-slate-500 mt-2 italic text-center">Trascina per ruotare la vista 3D</p>
+</div>
+
+<div class="projection-panel">
+    <div id="conicBadge" class="conic-badge">Circonferenza</div>
+    <div class="text-[10px] text-slate-400 mb-1 font-bold tracking-wider uppercase">Proiezione Risultante (Vista 2D)</div>
+    <canvas id="canvas2D" width="240" height="240"></canvas>
+</div>
+
+<script>
+    let scene, camera, renderer, cone, plane;
+    let canvas2D, ctx2D;
+    const coneAngle = Math.PI / 4; // 45 gradi
+
+    function init() {
+        // Scena 3D
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(7, 7, 7);
+        camera.lookAt(0, 0, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // 2D Setup
+        canvas2D = document.getElementById('canvas2D');
+        ctx2D = canvas2D.getContext('2d');
+
+        // Luci
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+
+        // Materiali
+        const coneMat = new THREE.MeshPhongMaterial({ 
+            color: 0x3b82f6, 
+            transparent: true, 
+            opacity: 0.25, 
+            side: THREE.DoubleSide,
+            wireframe: false 
+        });
+
+        // Doppio Cono (Visualizzazione)
+        const coneGeom = new THREE.ConeGeometry(5, 5, 64, 1, true);
+        const topCone = new THREE.Mesh(coneGeom, coneMat);
+        topCone.position.y = 2.5;
+        scene.add(topCone);
+
+        const bottomCone = new THREE.Mesh(coneGeom, coneMat);
+        bottomCone.position.y = -2.5;
+        bottomCone.rotation.x = Math.PI;
+        scene.add(bottomCone);
+
+        // Piano
+        const planeGeom = new THREE.PlaneGeometry(12, 12);
+        const planeMat = new THREE.MeshPhongMaterial({ 
+            color: 0x4ade80, 
+            transparent: true, 
+            opacity: 0.4, 
+            side: THREE.DoubleSide 
+        });
+        plane = new THREE.Mesh(planeGeom, planeMat);
+        scene.add(plane);
+
+        // Assi e Griglia
+        const grid = new THREE.GridHelper(10, 10, 0x334155, 0x1e293b);
+        grid.position.y = -5;
+        scene.add(grid);
+
+        // Controlli Camera Semplici
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+        document.addEventListener('mousedown', () => isDragging = true);
+        document.addEventListener('mouseup', () => isDragging = false);
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const dx = (e.clientX - prevMouse.x) * 0.01;
+                const dy = (e.clientY - prevMouse.y) * 0.01;
+                camera.position.x = camera.position.x * Math.cos(dx) - camera.position.z * Math.sin(dx);
+                camera.position.z = camera.position.x * Math.sin(dx) + camera.position.z * Math.cos(dx);
+                camera.position.y += dy * 2;
+                camera.lookAt(0,0,0);
+            }
+            prevMouse = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('resize', onWindowResize);
+        animate();
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function draw2DProjection(angleDeg, z0, x0) {
+        ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+        
+        // Disegna assi 2D
+        ctx2D.strokeStyle = '#334155';
+        ctx2D.lineWidth = 1;
+        ctx2D.beginPath();
+        ctx2D.moveTo(0, 120); ctx2D.lineTo(240, 120);
+        ctx2D.moveTo(120, 0); ctx2D.lineTo(120, 240);
+        ctx2D.stroke();
+
+        const theta = angleDeg * Math.PI / 180;
+        const alpha = Math.PI / 4; // Angolo cono (45°)
+        const scale = 20; // Scala per visibilità
+
+        ctx2D.strokeStyle = '#4ade80';
+        ctx2D.lineWidth = 2;
+        ctx2D.beginPath();
+
+        // Equazione semplificata dell'intersezione proiettata
+        // z = r * cot(alpha) -> r^2 = z^2 * tan^2(alpha)
+        // Piano: z = x*tan(theta) + z0 (considerando rotazione attorno a Y)
+        
+        let first = true;
+        const step = 0.1;
+        
+        // Calcolo della conica sul piano del foglio
+        // Per semplicità di visualizzazione proiettiamo i punti dove r^2 = (x*tan(theta) + z_offset)^2
+        for (let x = -6; x <= 6; x += step) {
+            let z_plane = x * Math.tan(theta) + z0;
+            // r^2 = x^2 + y^2. Nel cono r = |z| poichè alpha = 45 (tan(45)=1)
+            // y^2 = z_plane^2 - (x+x0)^2
+            let ySq = Math.pow(z_plane, 2) - Math.pow(x + x0, 2);
+            
+            if (ySq >= 0) {
+                let y = Math.sqrt(ySq);
+                let screenX = 120 + x * scale;
+                let screenY1 = 120 - y * scale;
+                let screenY2 = 120 + y * scale;
+
+                if (first) {
+                    ctx2D.moveTo(screenX, screenY1);
+                    first = false;
+                } else {
+                    ctx2D.lineTo(screenX, screenY1);
+                }
+            }
+        }
+        ctx2D.stroke();
+
+        // Disegna la metà inferiore se esistente (per curve chiuse o rami speculari)
+        ctx2D.beginPath();
+        first = true;
+        for (let x = 6; x >= -6; x -= step) {
+            let z_plane = x * Math.tan(theta) + z0;
+            let ySq = Math.pow(z_plane, 2) - Math.pow(x + x0, 2);
+            if (ySq >= 0) {
+                let y = -Math.sqrt(ySq);
+                let screenX = 120 + x * scale;
+                let screenY = 120 - y * scale;
+                if (first) { ctx2D.moveTo(screenX, screenY); first = false; }
+                else { ctx2D.lineTo(screenX, screenY); }
+            }
+        }
+        ctx2D.stroke();
+    }
+
+    function updateLogic() {
+        const angleDeg = parseFloat(document.getElementById('angle').value);
+        const posZ = parseFloat(document.getElementById('posZRange').value);
+        const posX = parseFloat(document.getElementById('offsetX').value);
+
+        document.getElementById('angleVal').innerText = angleDeg + "°";
+        document.getElementById('posZ').innerText = posZ;
+        document.getElementById('posX').innerText = posX;
+
+        // Trasformazione Piano 3D
+        plane.position.set(posX, posZ, 0);
+        plane.rotation.z = (angleDeg * Math.PI) / 180;
+        // Inclinazione per tagliare il cono verticalmente rispetto all'asse Y di Three.js
+        plane.rotation.x = Math.PI / 2; 
+
+        // Riconoscimento Conica
+        const badge = document.getElementById('conicBadge');
+        const alpha = 45; // Angolo pareti cono
+        
+        if (Math.abs(posZ) < 0.05 && Math.abs(posX) < 0.05) {
+            badge.innerText = "Punto (Degenere)";
+            badge.style.background = "#f87171";
+        } else if (angleDeg === 0) {
+            badge.innerText = "Circonferenza";
+            badge.style.background = "#4ade80";
+        } else if (angleDeg < alpha) {
+            badge.innerText = "Ellisse";
+            badge.style.background = "#4ade80";
+        } else if (angleDeg === alpha) {
+            badge.innerText = "Parabola";
+            badge.style.background = "#fbbf24";
+        } else {
+            badge.innerText = "Iperbole";
+            badge.style.background = "#60a5fa";
+        }
+
+        draw2DProjection(angleDeg, posZ, posX);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        updateLogic();
+        renderer.render(scene, camera);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
