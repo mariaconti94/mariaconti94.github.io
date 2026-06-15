@@ -1,10 +1,107 @@
-<body>
-    Ciao peoplez <br>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulazioni di matematica e fisica - prof. Maria Conti</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Inter per un look moderno e pulito) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
-    <a href="./creaistogramma.html"> Simulazione per creare istogrammi </a> 
-    <a href="./puntinotevolitriangolo.html"> Punti notevoli di un triangolo </a> 
-   
+    <!-- Sfondo decorativo con gradienti sfumati (Glow Effect) -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] pointer-events-none overflow-hidden opacity-20">
+        <div class="absolute top-[-10%] left-[10%] w-[400px] h-[400px] rounded-full bg-indigo-500 blur-[120px]"></div>
+        <div class="absolute top-[-20%] right-[10%] w-[500px] h-[500px] rounded-full bg-purple-500 blur-[150px]"></div>
+    </div>
 
+    <!-- Contenuto Principale -->
+    <main class="relative z-10 max-w-4xl mx-auto px-6 py-16 flex-grow flex flex-col justify-center w-full">
+        
+        <!-- Intestazione / Hero Section -->
+        <div class="text-center mb-16">
+            <span class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-4 animate-bounce">
+                Benvenuto! 👋
+            </span>
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent mb-4">
+                Simulazioni di matematica e fisica
+            </h1>
+        </div>
 
-    
+        <!-- Griglia delle Applicazioni / Link -->
+        <div class="grid md:grid-cols-2 gap-6 w-full">
+            
+            <!-- Card 1: Istogrammi -->
+            <a href="./creaistogramma.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/10">
+                <div>
+                    <!-- Icona -->
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+                        </svg>
+                    </div>
+                    <!-- Testo -->
+                    <h2 class="text-xl font-semibold text-white mb-2 group-hover:text-indigo-400 transition-colors duration-200">
+                        Simulatore di Istogrammi
+                    </h2>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Inserisci i dati, definisci le classi di frequenza e genera bellissimi istogrammi statistici in tempo reale.
+                    </p>
+                </div>
+                <!-- Bottone d'azione finto per migliorare il feedback visivo -->
+                <div class="flex items-center text-sm font-medium text-indigo-400 group-hover:text-indigo-300 gap-1">
+                    Avvia simulazione
+                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Card 2: Triangoli -->
+            <a href="./puntinotevolitriangolo.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
+                <div>
+                    <!-- Icona -->
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                        <!-- Icona Triangolo Geometrico disegnata a mano -->
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3L2 20h20L12 3z" />
+                            <circle cx="12" cy="13" r="1.5" fill="currentColor" />
+                        </svg>
+                    </div>
+                    <!-- Testo -->
+                    <h2 class="text-xl font-semibold text-white mb-2 group-hover:text-purple-400 transition-colors duration-200">
+                        Punti Notevoli del Triangolo
+                    </h2>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Esplora visivamente ortocentro, baricentro, incentro e circocentro muovendo i vertici di un triangolo dinamico.
+                    </p>
+                </div>
+                <!-- Bottone d'azione finto per migliorare il feedback visivo -->
+                <div class="flex items-center text-sm font-medium text-purple-400 group-hover:text-purple-300 gap-1">
+                    Esplora la geometria
+                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </a>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 w-full py-8 border-t border-slate-800/50 text-center text-xs text-slate-500">
+        <p>© 2026 Laboratorio Scientifico Digitale. Creato con passione per la didattica.</p>
+    </footer>
+
 </body>
+</html>
