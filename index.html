@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Put your HTML text here<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -35,15 +35,18 @@
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent mb-4">
                 Simulazioni di matematica e fisica
             </h1>
+             <h1 class="text-1xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent mb-4">
+                Prof. Maria Conti
+            </h1>
         </div>
 
         <!-- Griglia delle Applicazioni / Link -->
-         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent mb-4">
-                Simulazioni di matematica (algebra, geometria, statistica,...)
+         <h1 class="text-2xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent mb-4">
+                    Matematica (algebra, geometria, statistica,...)
             </h1>
         <div class="grid md:grid-cols-2 gap-6 w-full">
             
-            <!-- Card 1: Istogrammi -->
+            <!-- Card: Istogrammi -->
             <a href="./creaistogramma.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/10">
                 <div>
                     <!-- Testo -->
@@ -62,8 +65,48 @@
                     </svg>
                 </div>
             </a>
+            
+            <!-- Card: bin istogrammi per spiegare-->
+            <a href="./bin_istogrammi-spiegazione.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/10">
+                <div>
+                    <!-- Testo -->
+                    <h2 class="text-xl font-semibold text-white mb-2 group-hover:text-indigo-400 transition-colors duration-200">
+                        Binning di un istogramma
+                    </h2>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                       Prova a modificare il binning di due set di dati già pronti per comprendere meglio l'effetto della scelta dell'ampiezza del bin sull'istogramma.
+                    </p>
+                </div>
+                <!-- Bottone d'azione finto per migliorare il feedback visivo -->
+                <div class="flex items-center text-sm font-medium text-indigo-400 group-hover:text-indigo-300 gap-1">
+                    Avvia simulazione
+                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </a>
+            
+            <!-- Card: scatter plot-->
+            <a href="./scatterplot2D.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/10">
+                <div>
+                    <!-- Testo -->
+                    <h2 class="text-xl font-semibold text-white mb-2 group-hover:text-indigo-400 transition-colors duration-200">
+                        Binning di un istogramma
+                    </h2>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                       Inserisci due stringhe di dati e genera il grafico a dispersione sul piano cartesiano. Puoi anche inserire i valori di media di ciascuna stringa di dati e visualizzare le corrispondenti rette nel piano.
+                    </p>
+                </div>
+                <!-- Bottone d'azione finto per migliorare il feedback visivo -->
+                <div class="flex items-center text-sm font-medium text-indigo-400 group-hover:text-indigo-300 gap-1">
+                    Avvia simulazione
+                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </a>
 
-            <!-- Card 2: Triangoli -->
+            <!-- Card: Triangoli -->
             <a href="./puntinotevolitriangolo.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
                 <div>
                     <!-- Testo -->
@@ -83,20 +126,49 @@
                 </div>
             </a>
 
-        </div>
+  <!-- Card: Trasformazioni geometriche di funz goniometriche con audio-->
+            <a href="./trasf_funz_gonio-simulazioneaudio.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/10">
+                <div>
+                    <!-- Testo -->
+                    <h2 class="text-xl font-semibold text-white mb-2 group-hover:text-indigo-400 transition-colors duration-200">
+                        Trasformazione geometrica di funzioni goniometriche (con audio)
+                    </h2>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                       Modifica manualmente i parametri di una semplice funzione goniometrica e 'ascolta' il suono corrispondente.
+                    </p>
+                </div>
+                <!-- Bottone d'azione finto per migliorare il feedback visivo -->
+                <div class="flex items-center text-sm font-medium text-indigo-400 group-hover:text-indigo-300 gap-1">
+                    Avvia simulazione
+                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </a>
 
+
+        </div>
+        
+            
+        
+<br>
+<br>
+<h1 class="text-2xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-200 bg-clip-text text-transparent mb-4">
+                    Fisica (meccanica, termodinamica,...)
+            </h1>
+            
  <div class="grid md:grid-cols-2 gap-6 w-full">
 
 
-      <!-- Card 3: Triangoli ancora-->
-            <a href="./puntinotevolitriangolo.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
+      <!-- Card: prostaferesi -->
+            <a href="./prostaferesi-battimenti.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
                 <div>
                     <!-- Testo -->
                     <h2 class="text-xl font-semibold text-white mb-2 group-hover:text-purple-400 transition-colors duration-200">
-                        Punti Notevoli del Triangolo
+                        Prostaferesi e battimenti
                     </h2>
                     <p class="text-slate-400 text-sm leading-relaxed mb-6">
-                        Osserva visivamente ortocentro, baricentro, incentro e circocentro muovendo i vertici di un triangolo.
+                       Ascolta gli effetti delle formule di prostaferesi nella somma di due funzioni goniometriche con frequenze molto ravvicinate (che puoi regolare a mano).
                     </p>
                 </div>
                 <!-- Bottone d'azione finto per migliorare il feedback visivo -->
@@ -107,6 +179,26 @@
                     </svg>
                 </div>
             </a>
+            
+ <!-- Card: moto armonico -->
+            <a href="./motoarmonico-simulazione.html" class="group relative flex flex-col justify-between p-6 rounded-2xl bg-slate-800/40 border border-slate-700/50 hover:border-purple-500/50 hover:bg-slate-800/80 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
+                <div>
+                    <!-- Testo -->
+                    <h2 class="text-xl font-semibold text-white mb-2 group-hover:text-purple-400 transition-colors duration-200">
+                        Moto armonico come proiezione di un moto circolare
+                    </h2>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                       Modifica a piacere i parametri di un moto circolare e osserva come viene generato un moto armonico tramite proiezione del moto circolare lungo un asse.
+                    </p>
+                </div>
+                <!-- Bottone d'azione finto per migliorare il feedback visivo -->
+                <div class="flex items-center text-sm font-medium text-purple-400 group-hover:text-purple-300 gap-1">
+                    Avvia simulazione
+                    <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </a>            
  
  </div>
         
