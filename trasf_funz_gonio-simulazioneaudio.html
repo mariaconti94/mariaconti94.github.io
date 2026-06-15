@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Sinusoidale con Audio Dinamico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configurazione e Caricamento MathJax -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <style>
+        body { background-color: #f8fafc; }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        .btn-audio {
+            transition: all 0.2s;
+        }
+        .btn-audio.active {
+            background-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <header class="text-center">
+            <h1 class="text-3xl font-bold text-slate-800">Simulatore d'Onda con Audio</h1>
+            <div class="text-slate-600 mt-2">
+                <p>Ascolta e visualizza</p>
+                <div class="text-xl">
+                    $$y = A \cdot \sin(\omega x + \phi)$$
+                </div>
+            </div>
+        </header>
+
+        <div class="canvas-container">
+            <canvas id="sinCanvas"></canvas>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Pannello Controlli -->
+            <div class="control-panel space-y-5">
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="font-semibold text-slate-700 text-sm">Ampiezza (A) - Volume</label>
+                        <span id="valA" class="text-blue-600 font-mono text-sm">1.0</span>
+                    </div>
+                    <input type="range" id="paramA" min="0" max="150" step="1" value="50">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="font-semibold text-slate-700 text-sm">Frequenza Angolare (ω)</label>
+                        <span id="valW" class="text-blue-600 font-mono text-sm">1.0</span>
+                    </div>
+                    <input type="range" id="paramW" min="0.1" max="10" step="0.1" value="1">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="font-semibold text-slate-700 text-sm">Fase (φ)</label>
+                        <span id="valPhi" class="text-blue-600 font-mono text-sm">0.0</span>
+                    </div>
+                    <input type="range" id="paramPhi" min="-3.14" max="3.14" step="0.01" value="0">
+                </div>
+
+                <hr class="border-slate-100">
+
+                <div class="pt-2">
+                    <div class="flex items-center gap-4">
+                        <button id="toggleAudio" class="btn-audio flex-1 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700">
+                            <span id="audioIcon">▶</span>
+                            <span id="audioText">Riproduci Audio</span>
+                        </button>
+                        <div class="w-1/3 text-center">
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Master</label>
+                            <input type="range" id="volControl" min="0" max="1" step="0.01" value="0.2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pannello Analisi -->
+            <div class="control-panel flex flex-col justify-between space-y-4">
+                <div class="text-center w-full">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Equazione</h3>
+                    <div id="equationDisplay" class="bg-slate-100 p-3 rounded-lg text-lg font-serif italic text-slate-700 shadow-inner mb-4">
+                        y = 1.0 \sin(1.0x + 0.0)
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Dati Fisici</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            <span class="block text-xs text-blue-400 font-bold uppercase">Periodo ($T$)</span>
+                            <span id="periodDisplay" class="text-lg font-mono text-blue-700">6.28</span>
+                        </div>
+                        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                            <span class="block text-xs text-indigo-400 font-bold uppercase">Frequenza (Hz)</span>
+                            <span id="freqDisplay" class="text-lg font-mono text-indigo-700">220.0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-[10px] text-slate-400 leading-relaxed italic">
+                    Nota: L'ampiezza $A$ ora controlla direttamente l'intensità sonora del segnale.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('sinCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Controlli
+        const paramA = document.getElementById('paramA');
+        const paramW = document.getElementById('paramW');
+        const paramPhi = document.getElementById('paramPhi');
+        const volControl = document.getElementById('volControl');
+        const toggleAudioBtn = document.getElementById('toggleAudio');
+        
+        // Display
+        const valA = document.getElementById('valA');
+        const valW = document.getElementById('valW');
+        const valPhi = document.getElementById('valPhi');
+        const eqDisplay = document.getElementById('equationDisplay');
+        const periodDisplay = document.getElementById('periodDisplay');
+        const freqDisplay = document.getElementById('freqDisplay');
+        const audioText = document.getElementById('audioText');
+        const audioIcon = document.getElementById('audioIcon');
+
+        // Audio Context
+        let audioCtx = null;
+        let oscillator = null;
+        let gainNode = null;
+        let isPlaying = false;
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.connect(audioCtx.destination);
+            // Il volume iniziale è (A / max_A) * master_volume
+            const currentA = parseFloat(paramA.value) / 150;
+            gainNode.gain.value = currentA * parseFloat(volControl.value);
+        }
+
+        function startAudio() {
+            if (!audioCtx) initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sine';
+            const frequency = parseFloat(paramW.value) * 220;
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            
+            oscillator.connect(gainNode);
+            oscillator.start();
+            isPlaying = true;
+            
+            toggleAudioBtn.classList.add('active');
+            audioText.textContent = "Ferma Audio";
+            audioIcon.textContent = "■";
+        }
+
+        function stopAudio() {
+            if (oscillator) {
+                oscillator.stop();
+                oscillator.disconnect();
+            }
+            isPlaying = false;
+            toggleAudioBtn.classList.remove('active');
+            audioText.textContent = "Riproduci Audio";
+            audioIcon.textContent = "▶";
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            draw();
+        }
+
+        function updateMath() {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise();
+            }
+        }
+
+        function draw() {
+            const A_raw = parseFloat(paramA.value);
+            const W_val = parseFloat(paramW.value);
+            const Phi = parseFloat(paramPhi.value);
+            const MasterVol = parseFloat(volControl.value);
+            
+            const drawScaleW = W_val / 25; 
+            const realA = (A_raw / 50).toFixed(1);
+            const T = (2 * Math.PI / W_val).toFixed(2);
+            const audioFreq = (W_val * 220).toFixed(1);
+
+            // Calcolo Volume Dinamico: Ampiezza scelta / Ampiezza Max (150) * Master
+            const dynamicVolume = (A_raw / 150) * MasterVol;
+
+            // Aggiorna UI
+            valA.textContent = realA;
+            valW.textContent = W_val.toFixed(1);
+            valPhi.textContent = Phi.toFixed(2);
+            eqDisplay.innerHTML = `$y = ${realA} \sin(${W_val.toFixed(1)}x ${Phi >= 0 ? '+' : ''}${Phi.toFixed(2)})$`;
+            periodDisplay.textContent = T;
+            freqDisplay.textContent = audioFreq;
+
+            updateMath();
+
+            // Aggiorna Audio in tempo reale
+            if (isPlaying && oscillator) {
+                oscillator.frequency.setTargetAtTime(audioFreq, audioCtx.currentTime, 0.05);
+                // Il volume ora dipende da A e dal Master
+                gainNode.gain.setTargetAtTime(dynamicVolume, audioCtx.currentTime, 0.05);
+            }
+
+            // Disegno Grafico
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const midY = canvas.height / 2;
+            const midX = canvas.width / 2;
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Griglia
+            ctx.beginPath();
+            ctx.setLineDash([2, 4]);
+            ctx.strokeStyle = '#f1f5f9';
+            for(let i = 0; i < width; i += 40) { ctx.moveTo(i, 0); ctx.lineTo(i, height); }
+            for(let j = 0; j < height; j += 40) { ctx.moveTo(0, j); ctx.lineTo(width, j); }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Assi
+            ctx.beginPath();
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.moveTo(20, midY); ctx.lineTo(width - 20, midY);
+            ctx.moveTo(midX, 20); ctx.lineTo(midX, height - 20);
+            ctx.stroke();
+
+            // Label Assi
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#475569';
+            ctx.fillText('x', width - 15, midY + 15);
+            ctx.fillText('y', midX + 10, 25);
+
+            // Funzione
+            ctx.beginPath();
+            ctx.strokeStyle = isPlaying ? '#ef4444' : '#2563eb';
+            ctx.lineWidth = 3;
+            for (let px = 0; px < width; px++) {
+                const x_coord = px - midX;
+                const y_coord = midY - (A_raw * Math.sin(drawScaleW * x_coord + Phi));
+                if (px === 0) ctx.moveTo(px, y_coord);
+                else ctx.lineTo(px, y_coord);
+            }
+            ctx.stroke();
+
+            // Marker Periodo
+            if (W_val > 0) {
+                const pixelT = (2 * Math.PI) / drawScaleW;
+                ctx.beginPath();
+                ctx.strokeStyle = '#64748b';
+                ctx.lineWidth = 1.5;
+                const startX = midX - (Phi / drawScaleW);
+                ctx.moveTo(startX, midY + A_raw + 25);
+                ctx.lineTo(startX + pixelT, midY + A_val + 25);
+                ctx.moveTo(startX, midY + A_raw + 20); ctx.lineTo(startX, midY + A_raw + 30);
+                ctx.moveTo(startX + pixelT, midY + A_raw + 20); ctx.lineTo(startX + pixelT, midY + A_raw + 30);
+                // Nota: ho corretto il riferimento a A_val in A_raw per coerenza
+                ctx.stroke();
+                ctx.fillStyle = '#64748b';
+                ctx.fillText('T', startX + pixelT/2 - 4, midY + A_raw + 42);
+            }
+        }
+
+        toggleAudioBtn.addEventListener('click', () => {
+            if (isPlaying) stopAudio();
+            else startAudio();
+            draw();
+        });
+
+        [paramA, paramW, paramPhi, volControl].forEach(input => {
+            input.addEventListener('input', draw);
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+        window.onload = resizeCanvas;
+    </script>
+</body>
+</html>
