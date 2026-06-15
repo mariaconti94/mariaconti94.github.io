@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formula di Prostaferesi: Battimenti</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax per il rendering LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #f1f5f9; }
+        canvas { width: 100%; height: 120px; border-radius: 8px; background: #1e293b; }
+        .slider-label { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.875rem; }
+        input[type=range] { width: 100%; cursor: pointer; }
+        .btn-active { background-color: #ef4444 !important; }
+        .formula-box { background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <header class="text-center">
+            <h1 class="text-3xl font-bold text-blue-400">Formula di Prostaferesi: Battimenti</h1>
+            <p class="text-slate-400">Dimostrazione interattiva dell'interferenza sonora</p>
+        </header>
+
+        <!-- Box Formule Matematiche -->
+        <div class="formula-box p-6 rounded-xl text-center shadow-inner space-y-4">
+            <div>
+                <p class="text-xs text-slate-500 mb-1 uppercase tracking-wider font-bold">Formula Generale</p>
+                <div class="text-lg md:text-xl font-serif text-slate-300">
+                    $$ \cos(\alpha) + \cos(\beta) = 2 \cos\left(\frac{\alpha - \beta}{2}\right) \cos\left(\frac{\alpha + \beta}{2}\right) $$
+                </div>
+            </div>
+            
+            <div class="pt-4 border-t border-slate-700">
+                <p class="text-xs text-slate-500 mb-1 uppercase tracking-wider font-bold">Applicazione ai Battimenti ($ \alpha = \omega_1 t, \beta = \omega_2 t $)</p>
+                <div class="text-lg md:text-2xl font-serif text-blue-300 overflow-x-auto py-2">
+                    $$ a\cos(\omega_1 t) + a\cos(\omega_2 t) = 2a \cos\left(\frac{\omega_1 - \omega_2}{2}t\right) \cos\left(\frac{\omega_1 + \omega_2}{2}t\right) $$
+                </div>
+            </div>
+        </div>
+
+        <!-- Controlli Parametri -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-800 p-6 rounded-xl shadow-xl">
+            <div class="space-y-2">
+                <div class="slider-label">
+                    <span>Ampiezza ($a$)</span>
+                    <span id="valA" class="font-mono text-blue-400">0.5</span>
+                </div>
+                <input type="range" id="paramA" min="0" max="1" step="0.01" value="0.5">
+            </div>
+            <div class="space-y-2">
+                <div class="slider-label">
+                    <span>Frequenza $f_1$ (Hz)</span>
+                    <span id="valW1" class="font-mono text-blue-400">440</span>
+                </div>
+                <input type="range" id="paramW1" min="100" max="1000" step="1" value="440">
+            </div>
+            <div class="space-y-2">
+                <div class="slider-label">
+                    <span>Frequenza $f_2$ (Hz)</span>
+                    <span id="valW2" class="font-mono text-blue-400">444</span>
+                </div>
+                <input type="range" id="paramW2" min="100" max="1000" step="1" value="444">
+            </div>
+        </div>
+
+        <!-- Grafici e Player -->
+        <div class="space-y-4">
+            <!-- Onda Y1 -->
+            <div class="bg-slate-800 p-4 rounded-xl border-l-4 border-blue-500">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-sm font-semibold text-blue-300">$y_1 = a \cos(2\pi f_1 t)$</h2>
+                    <div class="space-x-2">
+                        <button id="playY1" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1 rounded transition">Play y1</button>
+                        <button onclick="downloadAudio('y1')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-slate-200 transition">Scarica .wav</button>
+                    </div>
+                </div>
+                <canvas id="canvasY1"></canvas>
+            </div>
+
+            <!-- Onda Y2 -->
+            <div class="bg-slate-800 p-4 rounded-xl border-l-4 border-emerald-500">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-sm font-semibold text-emerald-300">$y_2 = a \cos(2\pi f_2 t)$</h2>
+                    <div class="space-x-2">
+                        <button id="playY2" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1 rounded transition">Play y2</button>
+                        <button onclick="downloadAudio('y2')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-slate-200 transition">Scarica .wav</button>
+                    </div>
+                </div>
+                <canvas id="canvasY2"></canvas>
+            </div>
+
+            <!-- Somma -->
+            <div class="bg-slate-800 p-4 rounded-xl border-t-4 border-rose-500 shadow-2xl">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-sm font-semibold text-rose-300">Risultante: $y_1 + y_2$ (Effetto Battimento)</h2>
+                    <div class="space-x-2">
+                        <button id="playSum" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-4 py-1 rounded font-bold transition">Play Somma</button>
+                        <button onclick="downloadAudio('sum')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-slate-200 transition">Scarica .wav</button>
+                    </div>
+                </div>
+                <canvas id="canvasSum"></canvas>
+            </div>
+        </div>
+        
+        <footer class="text-center text-slate-500 text-sm italic py-4">
+            <p class="mt-2">Nota: Quando $|f_1 - f_2|$ è piccola, l'orecchio percepisce una variazione di ampiezza periodica.</p>
+        </footer>
+    </div>
+
+    <script>
+        const canvases = {
+            y1: document.getElementById('canvasY1'),
+            y2: document.getElementById('canvasY2'),
+            sum: document.getElementById('canvasSum')
+        };
+        const ctxs = {
+            y1: canvases.y1.getContext('2d'),
+            y2: canvases.y2.getContext('2d'),
+            sum: canvases.sum.getContext('2d')
+        };
+
+        const sliders = {
+            a: document.getElementById('paramA'),
+            f1: document.getElementById('paramW1'),
+            f2: document.getElementById('paramW2')
+        };
+
+        const labels = {
+            a: document.getElementById('valA'),
+            f1: document.getElementById('valW1'),
+            f2: document.getElementById('valW2')
+        };
+
+        let audioCtx = null;
+        let osc1, osc2, gain1, gain2;
+        let activeSounds = { y1: false, y2: false, sum: false };
+
+        function updateLabels() {
+            labels.a.innerText = sliders.a.value;
+            labels.f1.innerText = sliders.f1.value;
+            labels.f2.innerText = sliders.f2.value;
+        }
+
+        function resizeCanvases() {
+            Object.values(canvases).forEach(c => {
+                c.width = c.clientWidth;
+                c.height = c.clientHeight;
+            });
+        }
+
+        function draw() {
+            const a = parseFloat(sliders.a.value);
+            const f1 = parseFloat(sliders.f1.value);
+            const f2 = parseFloat(sliders.f2.value);
+            
+            updateLabels();
+            updateAudioParams();
+
+            const timeSpan = 0.05; 
+            const midY = canvases.y1.height / 2;
+            const ampScale = 40; 
+
+            const drawWave = (ctx, freq, color) => {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                for (let x = 0; x < ctx.canvas.width; x++) {
+                    const t = (x / ctx.canvas.width) * timeSpan;
+                    const y = midY + (a * ampScale) * Math.cos(2 * Math.PI * freq * t);
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            };
+
+            const drawSum = (ctx, freq1, freq2, color) => {
+                const beatTimeSpan = 0.25; 
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                
+                // Disegno asse centrale
+                ctx.beginPath();
+                ctx.strokeStyle = '#334155';
+                ctx.moveTo(0, midY);
+                ctx.lineTo(ctx.canvas.width, midY);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                for (let x = 0; x < ctx.canvas.width; x++) {
+                    const t = (x / ctx.canvas.width) * beatTimeSpan;
+                    const yVal = a * (Math.cos(2 * Math.PI * freq1 * t) + Math.cos(2 * Math.PI * freq2 * t));
+                    const y = midY + (yVal * (ampScale / 2));
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            };
+
+            drawWave(ctxs.y1, f1, '#60a5fa');
+            drawWave(ctxs.y2, f2, '#34d399');
+            drawSum(ctxs.sum, f1, f2, '#fb7185');
+
+            requestAnimationFrame(draw);
+        }
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            osc1 = audioCtx.createOscillator();
+            osc2 = audioCtx.createOscillator();
+            gain1 = audioCtx.createGain();
+            gain2 = audioCtx.createGain();
+            gain1.gain.value = 0;
+            gain2.gain.value = 0;
+            osc1.connect(gain1);
+            osc2.connect(gain2);
+            gain1.connect(audioCtx.destination);
+            gain2.connect(audioCtx.destination);
+            osc1.start();
+            osc2.start();
+        }
+
+        function updateAudioParams() {
+            if (!audioCtx) return;
+            const a = parseFloat(sliders.a.value);
+            const f1 = parseFloat(sliders.f1.value);
+            const f2 = parseFloat(sliders.f2.value);
+            const now = audioCtx.currentTime;
+
+            osc1.frequency.setTargetAtTime(f1, now, 0.03);
+            osc2.frequency.setTargetAtTime(f2, now, 0.03);
+
+            let targetG1 = 0;
+            let targetG2 = 0;
+
+            if (activeSounds.sum) {
+                targetG1 = a * 0.5;
+                targetG2 = a * 0.5;
+            } else {
+                if (activeSounds.y1) targetG1 = a;
+                if (activeSounds.y2) targetG2 = a;
+            }
+
+            gain1.gain.setTargetAtTime(targetG1, now, 0.03);
+            gain2.gain.setTargetAtTime(targetG2, now, 0.03);
+        }
+
+        function toggleSound(type, btnId) {
+            if (!audioCtx) initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (type === 'sum') {
+                activeSounds.sum = !activeSounds.sum;
+                activeSounds.y1 = false;
+                activeSounds.y2 = false;
+            } else {
+                activeSounds[type] = !activeSounds[type];
+                activeSounds.sum = false;
+            }
+            updateButtonUI();
+        }
+
+        function updateButtonUI() {
+            const btns = {
+                y1: { id: 'playY1', label: 'y1' },
+                y2: { id: 'playY2', label: 'y2' },
+                sum: { id: 'playSum', label: 'Somma' }
+            };
+            Object.entries(btns).forEach(([key, info]) => {
+                const el = document.getElementById(info.id);
+                if (activeSounds[key]) {
+                    el.innerText = "Stop " + info.label;
+                    el.classList.add('btn-active');
+                } else {
+                    el.innerText = "Play " + info.label;
+                    el.classList.remove('btn-active');
+                }
+            });
+        }
+
+        document.getElementById('playY1').onclick = () => toggleSound('y1', 'playY1');
+        document.getElementById('playY2').onclick = () => toggleSound('y2', 'playY2');
+        document.getElementById('playSum').onclick = () => toggleSound('sum', 'playSum');
+
+        async function downloadAudio(type) {
+            const a = parseFloat(sliders.a.value);
+            const f1 = parseFloat(sliders.f1.value);
+            const f2 = parseFloat(sliders.f2.value);
+            const sampleRate = 44100;
+            const duration = 2.0;
+            const offlineCtx = new OfflineAudioContext(1, sampleRate * duration, sampleRate);
+            const createOsc = (freq, amp) => {
+                const osc = offlineCtx.createOscillator();
+                const g = offlineCtx.createGain();
+                osc.frequency.value = freq;
+                g.gain.value = amp;
+                osc.connect(g);
+                g.connect(offlineCtx.destination);
+                osc.start(0);
+            };
+            if (type === 'y1') createOsc(f1, a);
+            else if (type === 'y2') createOsc(f2, a);
+            else { createOsc(f1, a * 0.5); createOsc(f2, a * 0.5); }
+            const buffer = await offlineCtx.startRendering();
+            const wavData = audioBufferToWav(buffer);
+            const blob = new Blob([wavData], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `prostaferesi_${type}.wav`;
+            link.click();
+        }
+
+        function audioBufferToWav(buffer) {
+            const numChannels = 1;
+            const sampleRate = buffer.sampleRate;
+            const format = 1; 
+            const bitDepth = 16;
+            const samples = buffer.getChannelData(0);
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+            const bufferWav = new ArrayBuffer(44 + samples.length * bytesPerSample);
+            const view = new DataView(bufferWav);
+            view.setUint32(0, 0x52494646, false); 
+            view.setUint32(4, 36 + samples.length * bytesPerSample, true);
+            view.setUint32(8, 0x57415645, false); 
+            view.setUint32(12, 0x666d7420, false); 
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            view.setUint32(36, 0x64617461, false); 
+            view.setUint32(40, samples.length * bytesPerSample, true);
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                offset += 2;
+            }
+            return bufferWav;
+        }
+
+        window.addEventListener('resize', resizeCanvases);
+        resizeCanvases();
+        draw();
+    </script>
+</body>
+</html>
